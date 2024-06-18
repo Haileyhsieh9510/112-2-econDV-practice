@@ -1,0 +1,41 @@
+# 繪製房價所得比圖表 -----
+#
+library(tidyverse)
+library(lubridate)
+
+# 趨勢和數值
+quarters <- seq(ymd('2002-07-01'), ymd('2020-09-30'), by = "year")
+n <- length(quarters)
+data <- tibble(
+  quarter = quarters,
+  全國 = c(5.5, 5.6, 5.8, 6.0, 6.1, 6.3, 6.5, 6.6, 6.7, 6.8, 7.0, 6.9, 6.8, 6.7, 6.6, 6.5, 6.4, 6.5, 6.8),
+  新北市 = c(6.5, 6.7, 6.9, 7.2, 7.5, 8.0, 8.5, 9.0, 9.2, 9.5, 10.0, 10.5, 10.8, 10.9, 11.0, 10.9, 10.8, 11.0, 11.2),
+  台北市 = c(7.5, 8.0, 8.5, 9.0, 9.5, 10.0, 10.5, 11.0, 12.0, 12.5, 13.0, 14.0, 14.5, 14.8, 15.0, 15.1, 15.0, 15.0, 15.2),
+  台中市 = c(5.2, 5.5, 5.8, 6.0, 6.3, 6.5, 6.8, 7.0, 7.3, 7.5, 7.8, 8.0, 8.1, 8.1, 8.0, 8.0, 8.0, 8.0, 8.2),
+  高雄市 = c(4.8, 5.0, 5.2, 5.5, 5.7, 6.0, 6.2, 6.5, 6.8, 7.0, 7.3, 7.5, 7.7, 7.6, 7.5, 7.5, 7.5, 7.6, 7.8)
+)
+
+# 將數據轉換為長格式
+data_long <- data %>%
+  pivot_longer(cols = -quarter, names_to = "city", values_to = "price_to_income_ratio")
+
+# 繪製圖表
+ggplot(data_long, aes(x = quarter, y = price_to_income_ratio, color = city)) +
+  geom_line(size = 1) +
+  geom_hline(yintercept = 3, linetype = "dashed", color = "black") +
+  geom_hline(yintercept = 6, linetype = "dashed", color = "black") +
+  annotate("rect", xmin = ymd('2002-07-01'), xmax = ymd('2020-09-30'), ymin = 3, ymax = 6, alpha = 0.2, fill = "gray") +
+  geom_vline(xintercept = ymd('2008-10-01'), linetype = "solid", color = "orange") +
+  annotate("text", x = ymd('2008-10-01'), y = 15, label = "2008 Q4", color = "orange", angle = 90, vjust = -0.5) +
+  labs(title = "2002-2020房價所得比趨勢",
+       subtitle = "全台房價所得比在2008年就超過定義之合理負擔範圍",
+       x = "年份",
+       y = "房價所得比 (%)",
+       color = "地區",
+       caption = "資料來源:內政部統計資料") +
+  scale_color_manual(values = c("全國" = "#e06666", "新北市" = "#9999cc", "台北市" = "#cc99cc", "台中市" = "black", "高雄市" = "gray")) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5),
+        legend.position = "bottom") +
+  annotate("text", x = min(data_long$quarter), y = 3, label = "3", hjust = -0.1, vjust = 1.1) +
+  annotate("text", x = min(data_long$quarter), y = 6, label = "6", hjust = -0.1, vjust = -0.3)
